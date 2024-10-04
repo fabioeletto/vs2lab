@@ -284,3 +284,6 @@ $RECYCLE.BIN/
 
 *.zip
 .vscode/
+
+# venv
+vslab2/

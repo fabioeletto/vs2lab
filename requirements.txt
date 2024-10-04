@@ -1,0 +1,12 @@
+redis
+rpyc
+zmq
+ipython
+jupyter
+jupyter_server
+ipyparallel
+
+# Dev packages
+pylint
+autopep8
+rope
