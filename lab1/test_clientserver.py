@@ -38,6 +38,42 @@ class TestEchoService(unittest.TestCase):
         cls._server._serving = False  # break out of server loop. pylint: disable=protected-access
         cls._server_thread.join()  # wait for server thread to terminate
 
+class TestPhonebookService(unittest.TestCase):
+    """The test"""
+    _server = clientserver.Server()  # create single server in class variable
+    _server_thread = threading.Thread(target=_server.serve)  # define thread for running server
+
+    @classmethod
+    def setUpClass(cls):
+        cls._server_thread.start()  # start server loop in a thread (called only once)
+
+    def setUp(self):
+        super().setUp()
+        self.client = clientserver.Client()  # create new client for each test
+
+    def test_srv_get_phonebook(self):
+        """Test get phonebook"""
+        phonebook = self.client.get_phonebook()
+        self.assertEqual(phonebook, "Alice: 1234\nBob: 5678\nCharlie: 9012\nDavid: 3456\nEve: 7890\nFrank: 1357\nGrace: 2468\nHeidi: 9753\nIvan: 8642\n")
+
+    def test_srv_get_number(self):
+        """Test get number"""
+        number = self.client.get_number("Alice")
+        self.assertEqual(number, "1234")
+
+    def test_srv_get_number_not_found(self):
+        """Test get number not found"""
+        number = self.client.get_number("Fabio")
+        self.assertEqual(number, "Not found")
+
+    def tearDown(self):
+        self.client.close()  # terminate client after each test
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._server._serving = False  # break out of server loop. pylint: disable=protected-access
+        cls._server_thread.join()  # wait for server thread to terminate
+
 
 if __name__ == '__main__':
     unittest.main()
