@@ -85,6 +85,8 @@ class Client:
         phonebook_json = data.decode('ascii')
         phonebook = json.loads(phonebook_json)
         print(f"Phonebook: \n{phonebook}")
+        self.sock.close()  # close the connection
+        self.logger.info("Client down.")
         return phonebook
     
     def get_number(self, name):
@@ -93,6 +95,8 @@ class Client:
         data = self.sock.recv(1024)
         response_json = data.decode('ascii')
         response = json.loads(response_json)
+        self.sock.close()  # close the connection
+        self.logger.info("Client down.")
         return response
 
     def close(self):
