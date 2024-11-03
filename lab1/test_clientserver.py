@@ -54,17 +54,17 @@ class TestPhonebookService(unittest.TestCase):
     def test_srv_get_phonebook(self):
         """Test get phonebook"""
         phonebook = self.client.get_phonebook()
-        self.assertEqual(phonebook, "Alice: 1234\nBob: 5678\nCharlie: 9012\nDavid: 3456\nEve: 7890\nFrank: 1357\nGrace: 2468\nHeidi: 9753\nIvan: 8642\n")
+        self.assertEqual(len(phonebook), 21)
 
     def test_srv_get_number(self):
         """Test get number"""
         number = self.client.get_number("Alice")
-        self.assertEqual(number, "1234")
+        self.assertEqual(number["Alice"], "1234")
 
     def test_srv_get_number_not_found(self):
         """Test get number not found"""
-        number = self.client.get_number("Fabio")
-        self.assertEqual(number, "Not found")
+        number = self.client.get_number("Zorro")
+        self.assertEqual(number["Zorro"], "Not found")
 
     def tearDown(self):
         self.client.close()  # terminate client after each test

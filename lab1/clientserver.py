@@ -4,6 +4,8 @@ Client and server using classes
 
 import logging
 import socket
+import json
+import random
 
 import const_cs
 from context import lab_logging
@@ -17,16 +19,10 @@ class Server:
     _logger = logging.getLogger("vs2lab.lab1.clientserver.Server")
     _serving = True
     _phonebook = {
-        "Alice": "1234",
-        "Bob": "5678",
-        "Charlie": "9012",
-        "David": "3456",
-        "Eve": "7890",
-        "Frank": "1357",
-        "Grace": "2468",
-        "Heidi": "9753",
-        "Ivan": "8642"
+        f"name_{i+1}": f"+1-{random.randint(200, 999)}-{random.randint(200, 999)}-{random.randint(1000, 9999)}"
+        for i in range(20)
     }
+    _phonebook["Alice"] = "1234"
 
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -48,14 +44,13 @@ class Server:
                         break  # stop if client stopped
                     data = data.decode('ascii')
                     if data == "getAll":
-                        data = ""
-                        for name, number in self._phonebook.items():
-                            data += f"{name}: {number}\n"
+                        data = json.dumps(self._phonebook)
                     elif data.startswith("get "):
                         name = data.split(" ")[1]
-                        data = self._phonebook.get(name, "Not found")
+                        number = self._phonebook.get(name, "Not found")
+                        data = json.dumps({name: number})
                     else:
-                        data += "*"
+                        data = json.dumps({"message": data + "*"})
                     connection.send(data.encode('ascii'))
                 connection.close()  # close the connection
             except socket.timeout:
@@ -77,17 +72,18 @@ class Client:
         """ Call server """
         self.sock.send(msg_in.encode('ascii'))  # send encoded string as data
         data = self.sock.recv(1024)  # receive the response
-        msg_out = data.decode('ascii')
-        print(msg_out)  # print the result
+        msg_out_json = data.decode('ascii')
+        msg_out = json.loads(msg_out_json)
         self.sock.close()  # close the connection
         self.logger.info("Client down.")
-        return msg_out
+        return msg_out["message"]
     
     def get_phonebook(self):
         """ Get phonebook from server """
         self.sock.send("getAll".encode('ascii'))
         data = self.sock.recv(1024)
-        phonebook = data.decode('ascii')
+        phonebook_json = data.decode('ascii')
+        phonebook = json.loads(phonebook_json)
         print(f"Phonebook: \n{phonebook}")
         return phonebook
     
@@ -95,9 +91,9 @@ class Client:
         """ Get number from server """
         self.sock.send(f"get {name}".encode('ascii'))
         data = self.sock.recv(1024)
-        number = data.decode('ascii')
-        print(f"{name}: {number}")
-        return number
+        response_json = data.decode('ascii')
+        response = json.loads(response_json)
+        return response
 
     def close(self):
         """ Close socket """
