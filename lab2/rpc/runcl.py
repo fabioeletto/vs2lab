@@ -1,7 +1,11 @@
 import rpc
 import logging
+import time
 
 from context import lab_logging
+
+def print_server_response(result_list):
+    print("Received result from long running operation: {}".format(result_list.value))
 
 lab_logging.setup(stream_level=logging.INFO)
 
@@ -9,8 +13,8 @@ cl = rpc.Client()
 cl.run()
 
 base_list = rpc.DBList({'foo'})
-result_list = cl.append('bar', base_list)
+cl.append('bar', base_list, print_server_response)
 
-print("Result: {}".format(result_list.value))
+time.sleep(15) # simulate that the client is doing something else
 
 cl.stop()
