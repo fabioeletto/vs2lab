@@ -15,6 +15,11 @@ cl.run()
 base_list = rpc.DBList({'foo'})
 cl.append('bar', base_list, print_server_response)
 
-time.sleep(15) # simulate that the client is doing something else
+print("Waiting for server response, but not blocking")
+time.sleep(2)
+print("Still waiting for server response, but not blocking")
+time.sleep(2)
+print("Still waiting for server response, but not blocking")
+time.sleep(15)# simulate that the client is doing something else
 
 cl.stop()

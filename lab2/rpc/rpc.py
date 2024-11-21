@@ -42,14 +42,10 @@ class Client:
         ack_response = self.chan.receive_from(self.server)  # wait for ack
         if ack_response[1] is not True:
             return None
+        print("Received ack")
         waiting_thread = threading.Thread(target=self.wait_for_server_response, args=(callback,))
         waiting_thread.start()
         
-        print("Waiting for server response, but not blocking")
-        time.sleep(2)
-        print("Still waiting for server response, but not blocking")
-        time.sleep(2)
-        print("Still waiting for server response, but not blocking")
         
 
 
@@ -72,7 +68,10 @@ class Server:
                 client = msgreq[0]  # see who is the caller
                 msgrpc = msgreq[1]  # fetch call & parameters
                 if constRPC.APPEND == msgrpc[0]:  # check what is being requested
+                    print("Sending ack ...")
+                    time.sleep(2)
                     self.chan.send_to({client}, True) # send ack
+                    print("Calculating ...")
                     time.sleep(10)  # simulate a long running operation
                     result = self.append(msgrpc[1], msgrpc[2])  # do local call
                     self.chan.send_to({client}, result)  # return response
