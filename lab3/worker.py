@@ -26,17 +26,12 @@ while True:
     
     words = work.split(' ')
     
-    short_words = []
-    long_words = []
-    
     for w in words:
         if len(w) > 5:
-            long_words.append(w)
-        else: 
-            short_words.append(w)
-
-    sender_reducer_1.send(pickle.dumps(short_words))
-    sender_reducer_2.send(pickle.dumps(long_words))
+            sender_reducer_2.send(pickle.dumps(w))
+        elif len(w) > 0: 
+            sender_reducer_1.send(pickle.dumps(w))
+    
 
     print(f'{me} did something...\n')
     time.sleep(1)
