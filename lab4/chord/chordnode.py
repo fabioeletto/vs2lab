@@ -38,6 +38,8 @@ class ChordNode:
 
         self.logger = logging.getLogger("vs2lab.lab4.chordnode.ChordNode")
 
+        self.recursive_way_back = []
+
     def in_between(self, key, lower_bound, upper_bound) -> bool:
         """
         Check if key is located in the name range between two given nodes considering the ring topology
@@ -152,12 +154,31 @@ class ChordNode:
 
                 # look up and return local successor 
                 next_id: int = self.local_successor_node(request[1])
-                self.channel.send_to([sender], (constChord.LOOKUP_REP, next_id))
+
+                # for iterative lookup, send the result back to the sender
+                #self.channel.send_to([sender], (constChord.LOOKUP_REP, next_id))
+
+                # for recursive lookup, send the result to the next node
+                self.recursive_way_back = request[2]
+                if self.node_id == next_id:
+                    self.logger.info("Node {:04n} found {:04n}.".format(self.node_id, int(request[1]))
+                                     + " Sending LOOKUP_REP to {:04n}.".format(int(sender)))
+                    self.channel.send_to([sender], (constChord.LOOKUP_REP, next_id, self.recursive_way_back))
+                else:
+                    self.recursive_way_back.append(sender)
+                    self.channel.send_to([str(next_id)], (constChord.LOOKUP_REQ, request[1], self.recursive_way_back))
 
                 # Finally do a sanity check
                 if not self.channel.exists(next_id):  # probe for existence
                     self.delete_node(next_id)  # purge disappeared node
-
+            # Handle recursive way back of lookup reply
+            elif request[0] == constChord.LOOKUP_REP:
+                self.logger.info("Node {:04n} received LOOKUP_REP from {:04n}."
+                                 .format(self.node_id, int(sender)))
+                self.recursive_way_back = request[2]
+                if len(self.recursive_way_back) > 0:
+                    new_sender = self.recursive_way_back.pop()
+                    self.channel.send_to([new_sender], (constChord.LOOKUP_REP, request[1], self.recursive_way_back))
             elif request[0] == constChord.JOIN:
                 # Join request (the node was already registered above)
                 self.logger.debug("Node {:04n} received JOIN from {:04n}."
