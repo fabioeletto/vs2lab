@@ -1,0 +1,60 @@
+"""
+Application performing a distributed commit using 3PC protocol
+"""
+
+import multiprocessing as mp
+import logging
+
+import coordinator
+import participant
+from context import lab_channel, lab_logging
+
+lab_logging.setup(stream_level=logging.INFO, file_level=logging.DEBUG)
+logger = logging.getLogger("vs2lab.lab6.3pc.3pc")
+
+def create_and_run(num_bits, proc_class, enter_bar, run_bar):
+    chan = lab_channel.Channel(n_bits=num_bits)
+    proc = proc_class(chan)
+    enter_bar.wait()
+    proc.init()
+    run_bar.wait()
+    logger.info(proc.run())
+
+if __name__ == "__main__":
+    m = 8  # Number of bits for process ids
+    n = 3  # Number of participants
+
+    # Flush communication channel
+    chan = lab_channel.Channel()
+    chan.channel.flushall()
+
+    # we need to spawn processes for support of windows
+    mp.set_start_method('spawn')
+
+    # create barriers to synchonize bootstrapping
+    bar1 = mp.Barrier(n+1)  # Wait for channel population
+    bar2 = mp.Barrier(n+1)  # Wait for process-group init
+
+    # start n participants in separate processes
+    participants = []
+    for i in range(n):
+        participant_proc = mp.Process(
+            target=create_and_run,
+            name=f"Participant-{i}",
+            args=(m, participant.Participant, bar1, bar2))
+        participants.append(participant_proc)
+        participant_proc.start()
+
+    # start coordinator in separate process
+    coordinator_proc = mp.Process(
+        target=create_and_run,
+        name="Coordinator",
+        args=(m, coordinator.Coordinator, bar1, bar2))
+    coordinator_proc.start()
+
+    # wait for coordinator to finish
+    coordinator_proc.join()
+
+    # wait for participants to finish
+    for participant_proc in participants:
+        participant_proc.join() 
